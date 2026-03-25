@@ -22,7 +22,7 @@ jobs:
           sed -i 's/^[[:space:]]*//' ~/.modal.toml
 
       - name: Install Modal
-        run: uv pip install modal --system
+        run: uv pip install modal
 
       - name: Verify tools and Modal auth
         run: |
