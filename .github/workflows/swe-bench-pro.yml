@@ -35,6 +35,9 @@ jobs:
       - name: Install Modal
         run: uv pip install modal
 
+      - name: Install project requirements
+        run: uv pip install -r requirements.txt
+
       - name: Verify tools and Modal auth
         run: |
           uv --version
