@@ -7,5 +7,22 @@ jobs:
   evaluate:
     runs-on: ubuntu-latest
     steps:
-      - name: Hello World
-        run: echo "hello world"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Authenticate with Modal
+        run: |
+          cat > ~/.modal.toml << 'EOF'
+          [default]
+          token_id = "${{ secrets.MODAL_TOKEN_ID }}"
+          token_secret = "${{ secrets.MODAL_TOKEN_SECRET }}"
+          active = true
+          EOF
+          # Strip leading whitespace introduced by the heredoc indentation
+          sed -i 's/^[[:space:]]*//' ~/.modal.toml
+
+      - name: Verify tools
+        run: |
+          uv --version
+          docker --version
+          cat ~/.modal.toml | head -1
