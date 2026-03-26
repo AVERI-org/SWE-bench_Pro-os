@@ -129,10 +129,28 @@ jobs:
           print(config)
           PYEOF
 
+      - name: Create SWE-agent .env file
+        working-directory: SWE-agent
+        run: |
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .env
+          if [ -n "$OPENAI_BASE_URL" ]; then
+            echo "OPENAI_BASE_URL=$OPENAI_BASE_URL" >> .env
+          fi
+
       - name: Build SWE-agent Docker image
         working-directory: SWE-agent
         run: just build
 
       - name: Run SWE-agent
         working-directory: SWE-agent
-        run: just run python sweagent_wrapper.py my_run.yaml
+        run: |
+          # just run is interactive; get the most recently built image and run directly
+          IMAGE=$(docker images -q | head -1)
+          echo "Using Docker image: $IMAGE"
+          docker run --rm \
+            --env-file .env \
+            -v "$HOME/.modal.toml:/root/.modal.toml:ro" \
+            -v "$(pwd)":/app \
+            -w /app \
+            "$IMAGE" \
+            python sweagent_wrapper.py my_run.yaml
