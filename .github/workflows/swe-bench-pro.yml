@@ -2,10 +2,22 @@ name: SWE-Bench Pro Evaluation
 
 on:
   workflow_dispatch:
+    inputs:
+      openai_api_key:
+        description: 'OpenAI API key (UNSAFE — visible in logs. Prefer the repository secret OPENAI_API_KEY instead)'
+        required: false
+        default: ''
+      openai_base_url:
+        description: 'OpenAI base URL (leave blank to use repository secret OPENAI_BASE_URL)'
+        required: false
+        default: ''
 
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ inputs.openai_api_key || secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL: ${{ inputs.openai_base_url || secrets.OPENAI_BASE_URL }}
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
