@@ -45,3 +45,6 @@ jobs:
           docker --version
           modal --version
           modal profile current
+
+      - name: Verify dataset loads
+        run: python -c "from datasets import load_dataset; ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test'); print(f'Loaded {len(ds)} instances')"
