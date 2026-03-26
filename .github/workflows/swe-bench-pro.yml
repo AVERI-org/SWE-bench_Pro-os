@@ -56,3 +56,6 @@ jobs:
 
       - name: Verify dataset loads
         run: python -c "from datasets import load_dataset; ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test'); print(f'Loaded {len(ds)} instances')"
+
+      - name: Generate SWE-agent instances file
+        run: python helper_code/generate_sweagent_instances.py --dockerhub_username jefzda
