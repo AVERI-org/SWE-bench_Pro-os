@@ -157,3 +157,12 @@ jobs:
 
       - name: Gather patches
         run: python helper_code/gather_patches.py --directory SWE-agent/sweagent_results/sweagent/swe_bench_pro_test --prefix model --output model_patches.json
+
+      - name: Generate evaluation CSV
+        run: |
+          python -c "
+          from datasets import load_dataset
+          ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test')
+          ds.to_csv('swe_bench_pro_full.csv')
+          print(f'Wrote {len(ds)} rows to swe_bench_pro_full.csv')
+          "
