@@ -154,3 +154,6 @@ jobs:
             -w /app \
             "$IMAGE" \
             python sweagent_wrapper.py my_run.yaml
+
+      - name: Gather patches
+        run: python helper_code/gather_patches.py --directory SWE-agent/sweagent_results/sweagent/swe_bench_pro_test --prefix model --output model_patches.json
