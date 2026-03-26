@@ -166,3 +166,13 @@ jobs:
           ds.to_csv('swe_bench_pro_full.csv')
           print(f'Wrote {len(ds)} rows to swe_bench_pro_full.csv')
           "
+
+      - name: Run evaluation
+        run: |
+          python swe_bench_pro_eval.py \
+            --raw_sample_path=swe_bench_pro_full.csv \
+            --patch_path=model_patches.json \
+            --output_dir=results/model \
+            --scripts_dir=run_scripts \
+            --num_workers=100 \
+            --dockerhub_username=jefzda
