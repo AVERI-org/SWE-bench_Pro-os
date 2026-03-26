@@ -41,6 +41,10 @@ jobs:
       - name: Install project requirements
         run: uv pip install -r requirements.txt
 
+      - name: Install SWE-agent
+        run: uv pip install -e .
+        working-directory: SWE-agent
+
       - name: Verify tools and Modal auth
         run: |
           uv --version
