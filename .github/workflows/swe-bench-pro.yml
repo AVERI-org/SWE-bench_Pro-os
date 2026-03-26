@@ -176,3 +176,9 @@ jobs:
             --scripts_dir=run_scripts \
             --num_workers=100 \
             --dockerhub_username=jefzda
+
+      - name: Upload evaluation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: results/model/
