@@ -81,3 +81,50 @@ jobs:
 
       - name: Generate SWE-agent instances file
         run: python helper_code/generate_sweagent_instances.py --dockerhub_username jefzda
+
+      - name: Generate SWE-agent run config
+        working-directory: SWE-agent
+        run: |
+          python - << 'PYEOF'
+          import os
+
+          args = [
+              "sweagent run-batch",
+              "--config config/tool_use.yaml",
+              "--output_dir {output_dir}",
+              "--num_workers 75",
+              "--random_delay_multiplier 1",
+              "--instances.type file",
+              "--instances.path data/instances.yaml",
+              f"--instances.slice {os.environ['SLICE']}",
+              "--instances.shuffle=False",
+              "--instances.deployment.type=modal",
+              "--instances.deployment.startup_timeout 1800",
+              "--instances.deployment.runtime_timeout 3600",
+              f"--agent.model.name {os.environ['MODEL_NAME']}",
+          ]
+
+          if os.environ.get("OPENAI_BASE_URL"):
+              args.append("--agent.model.api_base $OPENAI_BASE_URL")
+
+          args += [
+              "--agent.model.api_key $OPENAI_API_KEY",
+              "--agent.model.per_instance_cost_limit 0",
+              "--agent.model.per_instance_call_limit 250",
+              "--agent.model.max_input_tokens 1048576",
+          ]
+
+          command = " \\\n    ".join(args)
+
+          config = (
+              "output_dir: sweagent_results/sweagent/swe_bench_pro_test\n"
+              "sweagent_command: |\n"
+              f"  {command}\n"
+          )
+
+          with open("sweagent_wrapper_configs/my_run.yaml", "w") as f:
+              f.write(config)
+
+          print("Generated config:")
+          print(config)
+          PYEOF
