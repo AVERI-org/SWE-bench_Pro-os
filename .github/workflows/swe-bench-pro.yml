@@ -128,3 +128,11 @@ jobs:
           print("Generated config:")
           print(config)
           PYEOF
+
+      - name: Build SWE-agent Docker image
+        working-directory: SWE-agent
+        run: just build
+
+      - name: Run SWE-agent
+        working-directory: SWE-agent
+        run: just run python sweagent_wrapper.py my_run.yaml
