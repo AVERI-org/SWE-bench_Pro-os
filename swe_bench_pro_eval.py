@@ -52,6 +52,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from helper_code.image_uri import get_dockerhub_image_uri
+from helper_code.dead_code import generate_dead_code
 
 # Credit: prabhuteja12
 def load_base_docker(iid):
@@ -118,6 +119,10 @@ cd /app
 git reset --hard {base_commit}
 git checkout {base_commit}
 git apply -v /workspace/patch.diff
+# inject augmented dead code into the repo tree
+if [ -d /workspace/dead_code ]; then
+    cp -r /workspace/dead_code/* /app/ 2>/dev/null || true
+fi
 {before_repo_set_cmd}
 # run test and save stdout and stderr to separate files
 bash /workspace/run_script.sh {selected_test_files_to_run} > /workspace/stdout.log 2> /workspace/stderr.log
@@ -180,7 +185,7 @@ def write_patch_snapshot(output_dir, uid, prefix, patch):
         f.write(patch)
 
 
-def assemble_workspace_files(uid, scripts_dir, patch, sample):
+def assemble_workspace_files(uid, scripts_dir, patch, sample, inject_dead_code=False):
     run_script = load_local_script(scripts_dir, uid, "run_script.sh")
     parser_script = load_local_script(scripts_dir, uid, "parser.py")
     entryscript_content = create_entryscript(sample)
@@ -195,6 +200,13 @@ def assemble_workspace_files(uid, scripts_dir, patch, sample):
         "parser.py": parser_script,
         "entryscript.sh": entryscript_content,
     }
+
+    if inject_dead_code:
+        # Add dead code files under dead_code/ in workspace so entryscript can
+        # copy them into the repo tree at /app/_augmented/
+        for rel_path, content in generate_dead_code(uid).items():
+            files[f"dead_code/{rel_path}"] = content
+
     return files, entryscript_content
 
 
@@ -276,7 +288,7 @@ def collect_outputs_local(workspace_dir, output_dir, uid, prefix):
         return None
 
 
-def eval_with_modal(patch, sample, output_dir, dockerhub_username, scripts_dir, prefix="", redo=False, block_network=False, docker_platform=None):
+def eval_with_modal(patch, sample, output_dir, dockerhub_username, scripts_dir, prefix="", redo=False, block_network=False, docker_platform=None, inject_dead_code=False):
     if modal is None:
         raise RuntimeError("modal is not installed. Install it or run with --use_local_docker")
     uid = sample["instance_id"]
@@ -291,7 +303,7 @@ def eval_with_modal(patch, sample, output_dir, dockerhub_username, scripts_dir, 
         write_patch_snapshot(output_dir, uid, prefix, patch)
 
         try:
-            files, entryscript_content = assemble_workspace_files(uid, scripts_dir, patch, sample)
+            files, entryscript_content = assemble_workspace_files(uid, scripts_dir, patch, sample, inject_dead_code=inject_dead_code)
         except FileNotFoundError as e:
             print(f"Error loading scripts for {uid}: {e}")
             return None
@@ -355,7 +367,7 @@ def eval_with_modal(patch, sample, output_dir, dockerhub_username, scripts_dir, 
                 pass
 
 
-def eval_with_docker(patch, sample, output_dir, dockerhub_username, scripts_dir, prefix="", redo=False, block_network=False, docker_platform=None):
+def eval_with_docker(patch, sample, output_dir, dockerhub_username, scripts_dir, prefix="", redo=False, block_network=False, docker_platform=None, inject_dead_code=False):
     if docker is None:
         raise RuntimeError("docker SDK is not installed. Install via 'pip install docker' or run without --use_local_docker")
     uid = sample["instance_id"]
@@ -367,7 +379,7 @@ def eval_with_docker(patch, sample, output_dir, dockerhub_username, scripts_dir,
 
     try:
         try:
-            files, entryscript_content = assemble_workspace_files(uid, scripts_dir, patch, sample)
+            files, entryscript_content = assemble_workspace_files(uid, scripts_dir, patch, sample, inject_dead_code=inject_dead_code)
         except FileNotFoundError as e:
             print(f"Error loading scripts for {uid}: {e}")
             return None
@@ -463,6 +475,10 @@ def parse_args():
     parser.add_argument(
         "--block_network", action="store_true", help="Block network access inside container"
     )
+    parser.add_argument(
+        "--inject_dead_code", action="store_true",
+        help="Inject non-executed dead code files into each repo before evaluation",
+    )
     return parser.parse_args()
 
 
@@ -531,6 +547,7 @@ def main():
                 redo=args.redo,
                 block_network=args.block_network,
                 docker_platform=(args.docker_platform or detected_platform) if args.use_local_docker else None,
+                inject_dead_code=args.inject_dead_code,
             ): patch_sample
             for patch_sample in valid_patches
         }
