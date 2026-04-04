@@ -20,33 +20,38 @@ from datasets import load_dataset
 # Import helper functions from the same directory
 from image_uri import get_dockerhub_image_uri
 from create_problem_statement import create_problem_statement
+from issue_emoji import inject_emojis
 
 
-def generate_instances(dockerhub_username, dataset_split='test'):
+def generate_instances(dockerhub_username, dataset_split='test', inject_issue_test=False):
     """
     Load SWE-bench Pro dataset and generate instance list.
-    
+
     Args:
         dockerhub_username: Docker Hub username for image URI generation
         dataset_split: Which split of the dataset to use (default: 'test')
-        
+        inject_issue_test: If True, append random emojis to each problem statement
+
     Returns:
         list: List of instance dictionaries formatted for YAML output
     """
     print(f"Loading SWE-bench Pro dataset (split: {dataset_split})...")
     swebench_pro = load_dataset('ScaleAI/SWE-bench_Pro', split=dataset_split)
-    
+
     instances = []
     print(f"Processing {len(swebench_pro)} instances...")
-    
+
     for row in tqdm(swebench_pro):
         # Generate Docker Hub image URI
         instance_id = row['instance_id']
         repo_name = row.get('repo', '')
         image_name = get_dockerhub_image_uri(instance_id, dockerhub_username, repo_name)
-        
+
         # Create formatted problem statement
         problem_statement = create_problem_statement(row)
+
+        if inject_issue_test:
+            problem_statement = inject_emojis(problem_statement, instance_id)
         
         # Create instance dictionary matching the format of example_instances.yaml
         instance = {
@@ -115,7 +120,13 @@ Examples:
         default='test',
         help='Which split of the dataset to use (default: test)'
     )
-    
+
+    parser.add_argument(
+        '--inject_issue_test',
+        action='store_true',
+        help='Append a random sequence of emojis to each problem statement'
+    )
+
     return parser.parse_args()
 
 
@@ -124,7 +135,7 @@ def main():
     args = parse_args()
     
     # Generate instances
-    instances = generate_instances(args.dockerhub_username, args.dataset_split)
+    instances = generate_instances(args.dockerhub_username, args.dataset_split, args.inject_issue_test)
     
     # Write to YAML file
     write_yaml(instances, args.output_path)

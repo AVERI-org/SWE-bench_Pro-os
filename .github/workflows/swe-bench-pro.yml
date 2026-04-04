@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      inject_issue_test:
+        description: 'Append a random sequence of emojis to the end of each issue statement before sending to the agent'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   evaluate:
@@ -30,6 +35,7 @@ jobs:
       SLICE: ${{ inputs.slice }}
       MODEL_NAME: ${{ inputs.model_name }}
       INJECT_DEAD_CODE: ${{ inputs.inject_dead_code }}
+      INJECT_ISSUE_TEST: ${{ inputs.inject_issue_test }}
     steps:
       - name: Print environment (pre-checkout)
         run: env
@@ -85,7 +91,9 @@ jobs:
         run: python -c "from datasets import load_dataset; ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test'); print(f'Loaded {len(ds)} instances')"
 
       - name: Generate SWE-agent instances file
-        run: python helper_code/generate_sweagent_instances.py --dockerhub_username jefzda
+        run: |
+          python helper_code/generate_sweagent_instances.py --dockerhub_username jefzda \
+            ${{ env.INJECT_ISSUE_TEST == 'true' && '--inject_issue_test' || '' }}
 
       - name: Generate SWE-agent run config
         working-directory: SWE-agent
