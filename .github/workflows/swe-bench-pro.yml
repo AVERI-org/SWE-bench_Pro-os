@@ -30,6 +30,9 @@ jobs:
       SLICE: ${{ inputs.slice }}
       MODEL_NAME: ${{ inputs.model_name }}
     steps:
+      - name: Print environment (pre-checkout)
+        run: env
+
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
