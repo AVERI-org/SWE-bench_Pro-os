@@ -29,6 +29,7 @@ jobs:
       OPENAI_BASE_URL: ${{ inputs.openai_base_url || secrets.OPENAI_BASE_URL }}
       SLICE: ${{ inputs.slice }}
       MODEL_NAME: ${{ inputs.model_name }}
+      INJECT_DEAD_CODE: ${{ inputs.inject_dead_code }}
     steps:
       - name: Print environment (pre-checkout)
         run: env
@@ -180,7 +181,7 @@ jobs:
             --scripts_dir=run_scripts \
             --num_workers=100 \
             --dockerhub_username=jefzda \
-            ${{ inputs.inject_dead_code == 'true' && '--inject_dead_code' || '' }}
+            ${{ env.INJECT_DEAD_CODE == 'true' && '--inject_dead_code' || '' }}
 
       - name: Upload evaluation results
         uses: actions/upload-artifact@v4
