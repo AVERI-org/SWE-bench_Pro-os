@@ -211,6 +211,12 @@ def assemble_workspace_files(uid, scripts_dir, patch, sample, inject_dead_code=F
 
 
 def write_files_modal(sandbox, files):
+    # Create any nested parent directories that don't exist yet (e.g. dead_code/_augmented/)
+    parent_dirs = sorted({os.path.dirname(rel_path) for rel_path in files if os.path.dirname(rel_path)})
+    for d in parent_dirs:
+        process = sandbox.exec("mkdir", "-p", f"/workspace/{d}")
+        process.wait()
+
     for rel_path, content in files.items():
         with sandbox.open(f"/workspace/{rel_path}", "w") as f:
             f.write(content)
@@ -219,6 +225,7 @@ def write_files_modal(sandbox, files):
 def write_files_local(workspace_dir, files):
     for rel_path, content in files.items():
         dst = os.path.join(workspace_dir, rel_path)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(dst, "w") as f:
             f.write(content)
 
