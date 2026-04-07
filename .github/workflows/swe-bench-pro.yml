@@ -36,6 +36,7 @@ jobs:
       MODEL_NAME: ${{ inputs.model_name }}
       INJECT_DEAD_CODE: ${{ inputs.inject_dead_code }}
       INJECT_ISSUE_TEST: ${{ inputs.inject_issue_test }}
+      LITELLM_DROP_PARAMS: "true"
     steps:
       - name: Print environment (pre-checkout)
         run: env
