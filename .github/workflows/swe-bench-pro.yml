@@ -147,6 +147,7 @@ jobs:
         working-directory: SWE-agent
         run: |
           echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .env
+          echo "LITELLM_DROP_PARAMS=$LITELLM_DROP_PARAMS" >> .env
           if [ -n "$OPENAI_BASE_URL" ]; then
             echo "OPENAI_BASE_URL=$OPENAI_BASE_URL" >> .env
           fi
